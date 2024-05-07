@@ -1,0 +1,4 @@
+--extra-index-url https://abetlen.github.io/llama-cpp-python/whl/121
+instructor==1.2.5
+llama-cpp-python==0.2.69
+anthropic # for some reason instructor doesnt install this, but errors if not present
