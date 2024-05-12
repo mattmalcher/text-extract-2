@@ -73,25 +73,45 @@ class Property(BaseModel):
     ground_rent: Optional[str] = None
     building_insurance: Optional[str] = None
 
+    def augment(self, data: dict):
+
+        # Existing items that are not empty + new items.
+        update = data | {k:v for k, v in self.model_dump().items() if v is not None}
+
+        # check each one is ok, then set it.
+        for k, v in (
+            self.model_validate(update).model_dump(exclude_defaults=True).items()
+        ):
+
+            setattr(self, k, v)
+        return self
+
+    # define eq and hash so we can use sets
+    def __eq__(self, other):
+        return isinstance(other, Property) and self.id == other.id
+
+    def __hash__(self):
+        return hash(self.id)
+    
+initial_property = Property(
+    id="blah",
+    name="test",
+    price=123_456
+)
 
 
-
-extraction_stream = create(
-    response_model=instructor.Partial[Property],  # (3)!
+additional_data = create(
+    response_model=Property,  # (3)!
     messages=[
         {
             "role": "user",
             "content": f"Get the information about the property {text_block}",
         },
     ],
-    stream=True,
+    stream=False,
     max_retries=2
 )
 
+initial_property.augment(additional_data.model_dump())
 
-console = Console()
-
-for extraction in extraction_stream:
-    obj = extraction.model_dump()
-    console.clear()  # (4)!
-    console.print(obj)
+print("done")
